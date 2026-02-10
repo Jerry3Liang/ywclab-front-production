@@ -101,6 +101,15 @@
           @click="decrement"
           :disabled="showFinalGroupingBarChart"
           style="width:40px">-</button>
+<!--      <input type="number"-->
+<!--             min="0"-->
+<!--             class="form-control"-->
+<!--             aria-label="Sizing example input"-->
+<!--             aria-describedby="inputGroup-sizing-default"-->
+<!--             style="width: 10px"-->
+<!--             @input="validateInputCount"-->
+<!--             :disabled="showFinalGroupingBarChart"-->
+<!--             v-model.number="inputGroupCount">-->
       <input type="number"
              min="0"
              class="form-control"
@@ -604,6 +613,7 @@ const filterButton = (highInput, lowInput) => {
   //計算剩餘老鼠數量的所有公因數
   //剩餘老鼠數量的最大公因數
   let greatestCommonFactor = (firstFilterCWaveTableData.value.length - 1) / 2;
+  console.log(greatestCommonFactor)
   let localCommonFactorList = [];
   for(let i = 1; i <= greatestCommonFactor; i++){
     if(greatestCommonFactor % i === 0){

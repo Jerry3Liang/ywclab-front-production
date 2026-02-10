@@ -16,7 +16,7 @@
             <ul class="dropdown-menu">
               <li><RouterLink class="dropdown-item" to="/ERG/OPs">OPs</RouterLink></li>
               <li><RouterLink class="dropdown-item" to="/ERG/CWave">C-Wave</RouterLink></li>
-              <li><RouterLink class="dropdown-item" to="/ERG/VEP">VEP</RouterLink></li>
+<!--              <li><RouterLink class="dropdown-item" to="/ERG/VEP">VEP</RouterLink></li>-->
 <!--              <li><RouterLink class="dropdown-item" to="/ERG/PhNR">PhNR</RouterLink></li>-->
               <li><RouterLink class="dropdown-item" to="/OCT/TotalLayer">OCT Total Layer</RouterLink></li>
               <li><RouterLink class="dropdown-item" to="/OCT/FourLayer">OCT Four Layer</RouterLink></li>
@@ -28,11 +28,11 @@
             </a>
             <ul class="dropdown-menu">
               <li><RouterLink class="dropdown-item" to="/ERG/OPsWaveComparison">OPs Wave Comparison</RouterLink></li>
-              <li><RouterLink class="dropdown-item" to="/ERG/ABWaveComparison">AB Wave in C Wave Comparison</RouterLink></li>
-              <li><RouterLink class="dropdown-item" to="/ERG/CWaveComparison">C Wave Comparison</RouterLink></li>
-              <li><RouterLink class="dropdown-item" to="/ERG/ABCWaveComparison">ABC Wave Comparison</RouterLink></li>
-              <li><RouterLink class="dropdown-item" to="/ERG/VEPWaveComparison">VEP Comparison</RouterLink></li>
-              <li><RouterLink class="dropdown-item" to="/PLR/PLRComparison">PLR Comparison</RouterLink></li>
+<!--              <li><RouterLink class="dropdown-item" to="/ERG/ABWaveComparison">AB Wave in C Wave Comparison</RouterLink></li>-->
+<!--              <li><RouterLink class="dropdown-item" to="/ERG/CWaveComparison">C Wave Comparison</RouterLink></li>-->
+<!--              <li><RouterLink class="dropdown-item" to="/ERG/ABCWaveComparison">ABC Wave Comparison</RouterLink></li>-->
+<!--              <li><RouterLink class="dropdown-item" to="/ERG/VEPWaveComparison">VEP Comparison</RouterLink></li>-->
+<!--              <li><RouterLink class="dropdown-item" to="/PLR/PLRComparison">PLR Comparison</RouterLink></li>-->
 <!--              <li><RouterLink class="dropdown-item" to="/ERG/PhNRWaveComparison">PhNR Comparison</RouterLink></li>-->
             </ul>
           </li>
@@ -42,7 +42,7 @@
             </a>
             <ul class="dropdown-menu">
               <RouterLink class="nav-link active" aria-current="page" to="/ERG/GroupingByCWaveData">{{$t('Navbar3a')}}</RouterLink>
-              <RouterLink class="nav-link active" aria-current="page" to="/UpdateFileNameExceptCWave">{{$t('Navbar3b')}}</RouterLink>
+<!--              <RouterLink class="nav-link active" aria-current="page" to="/UpdateFileNameExceptCWave">{{$t('Navbar3b')}}</RouterLink>-->
             </ul>
           </li>
 <!--          <li class="nav-item dropdown">-->
@@ -63,9 +63,9 @@
 <!--          </li>-->
         </ul>
       </div>
-      <button class="btn btn-outline-secondary ms-auto" @click="toggleLanguage" :disabled="changeLanguageButton">
-        {{$t('button')}}
-      </button>
+<!--      <button class="btn btn-outline-secondary ms-auto" @click="toggleLanguage" :disabled="changeLanguageButton">-->
+<!--        {{$t('button')}}-->
+<!--      </button>-->
     </div>
   </nav>
 </template>

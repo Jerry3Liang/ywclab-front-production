@@ -60,12 +60,12 @@
           @click="clearInput"
           v-if="selectedFile">{{$t('ResetButton')}}</button>
     </div>
-    <button class="btn btn-outline-success"
-            id="inputGroup-sizing-default"
-            type="button"
-            @click="downloadCWaveTableData"
-            v-if="showTables && isAllEverSelected"
-            style="margin-left: 10px; border-radius: 30px">{{$t('DownloadButton')}}</button>
+<!--    <button class="btn btn-outline-success"-->
+<!--            id="inputGroup-sizing-default"-->
+<!--            type="button"-->
+<!--            @click="downloadCWaveTableData"-->
+<!--            v-if="showTables && isAllEverSelected"-->
+<!--            style="margin-left: 10px; border-radius: 30px">{{$t('DownloadButton')}}</button>-->
   </div>
   <table class="table" v-if="showTables" style="margin-top: 10px">
     <thead>
