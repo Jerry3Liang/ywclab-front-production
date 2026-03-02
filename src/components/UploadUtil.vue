@@ -40,10 +40,10 @@
   </div>
 
   <!-- 上傳中 spinner -->
-  <div class="d-flex align-items-center form-control" v-if="loading" style="width: 130px; border: solid; color: green">
-    <strong>{{ i18nText.uploadingText }}</strong>
-    <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>
-  </div>
+<!--  <div class="d-flex align-items-center form-control" v-if="loading" style="width: 130px; border: solid; color: green">-->
+<!--    <strong>{{ i18nText.uploadingText }}</strong>-->
+<!--    <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>-->
+<!--  </div>-->
 </template>
 
 <script setup>
