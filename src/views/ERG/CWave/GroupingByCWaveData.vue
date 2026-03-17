@@ -450,9 +450,9 @@ const Toast = SweetAlert2.mixin({
   toast: true,
   position: 'top-end',
   showConfirmButton: false,
-  onOpen: toast => {
-    toast.addEventListener('mouseenter', SweetAlert2.stopTimer())
-    toast.addEventListener('mouseleave', SweetAlert2.resumeTimer())
+  didOpen: toast => {
+    toast.addEventListener('mouseenter', SweetAlert2.stopTimer)
+    toast.addEventListener('mouseleave', SweetAlert2.resumeTimer)
   }
 });
 
@@ -1265,8 +1265,7 @@ const copyTableLeftEyeValues = (index) => {
     Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer: 1000,
-      allowOutsideClick: false
+      timer: 1000
     });
   }).catch(() => {
     SweetAlert2.fire('複製失敗', '表格值複製失敗', 'error');
@@ -1310,8 +1309,7 @@ const copyTableRightEyeValues = (index) => {
     Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer: 1000,
-      allowOutsideClick: false
+      timer: 1000
     });
   }).catch(() => {
     SweetAlert2.fire('複製失敗', '表格值複製失敗', 'error');
@@ -1373,8 +1371,7 @@ const copyTableAllEyesValues = (index) => {
     Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer: 1000,
-      allowOutsideClick: false
+      timer: 1000
     });
   }).catch(() => {
     SweetAlert2.fire('複製失敗', '表格值複製失敗', 'error');

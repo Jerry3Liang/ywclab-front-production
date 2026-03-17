@@ -148,9 +148,9 @@ const Toast = Swal.mixin({
   toast: true,
   position: 'top-end',
   showConfirmButton: false,
-  onOpen: toast => {
-    toast.addEventListener('mouseenter', Swal.stopTimer())
-    toast.addEventListener('mouseleave', Swal.resumeTimer())
+  didOpen: toast => {
+    toast.addEventListener('mouseenter', Swal.stopTimer)
+    toast.addEventListener('mouseleave', Swal.resumeTimer)
   }
 });
 
@@ -368,8 +368,7 @@ const copySelectedData = async () => {
       await Toast.fire({
         text: '複製成功',
         icon: 'success',
-        timer: 1000,
-        allowOutsideClick: false
+        timer: 1000
       })
     } catch (error) {
       console.error('Failed to copy text: ', error);

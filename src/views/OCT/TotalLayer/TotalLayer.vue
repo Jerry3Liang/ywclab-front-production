@@ -1,7 +1,7 @@
 <template>
   <h1 style="padding-bottom: 5px">{{$t('TotalLayerTitle')}}</h1>
   <div style="display: flex; flex-wrap: wrap; width: 100%;">
-    <div class="input-group" style="width: 540px">
+    <div class="input-group" style="width: 785px">
       <upload-util
           :i18nText="i18nText"
           :disabled="showTables"
@@ -22,21 +22,45 @@
 <!--        <strong>Loading...</strong>-->
 <!--        <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>-->
 <!--      </div>-->
-      <select class="form-select" style="width: 130px; border-color: green; color: green" v-if="selectedFile && loading === false" v-model="selectedGroup" @change="trackSelection">
-        <option value="null" selected :disabled="showTables">{{$t('DropDownSelect')}}</option>
-        <option v-for="(name, index) in selectGroupName" :key="index" :value="name">{{name}}</option>
-      </select>
+<!--      <select class="form-select" style="width: 130px; border-color: green; color: green" v-if="selectedFile && loading === false" v-model="selectedGroup" @change="trackSelection">-->
+<!--        <option value="null" selected :disabled="showTables">{{$t('DropDownSelect')}}</option>-->
+<!--        <option v-for="(name, index) in selectGroupName" :key="index" :value="name">{{name}}</option>-->
+<!--      </select>-->
       <button class="btn btn-outline-success"
               type="button"
               @click="clearInput"
               v-if="selectedFile">{{$t('ResetButton')}}</button>
+      <button class="btn btn-outline-success"
+              id="inputGroup-sizing-default"
+              type="button"
+              @click="downloadOCTTotalLayerData"
+              v-if="showTables"
+              style="border-radius: 0 5px 5px 0">{{$t('DownloadButton')}}</button>
+      <b v-if="showTables" style="margin-left: 5px; margin-top: 10px; color: #bb2d3b">(可拖移組別決定 Excel 呈現順序)</b>
     </div>
-    <button class="btn btn-outline-success"
-            id="inputGroup-sizing-default"
-            type="button"
-            @click="downloadOCTTotalLayerData"
-            v-if="showTables && isAllEverSelected"
-            style="margin-left: 10px; border-radius: 30px">{{$t('DownloadButton')}}</button>
+  </div>
+  <div v-if="selectedFile" class="group-area">
+    <div class="d-flex align-items-center form-control" v-if="loading" style="width: 130px; border: none; color: green">
+      <strong>{{ i18nText.uploadingText }}</strong>
+      <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>
+    </div>
+    <div v-if="selectedFile && loading === false" class="group-list">
+      <h4 class="group-p">請點擊組別顯示數據 : </h4>
+      <VueDraggable
+          v-model="selectGroupName"
+          class="group-list"
+          item-key="name"
+          animation="200"
+      >
+        <div
+            v-for="(name, index) in selectGroupName"
+            :key="index"
+            class="group-item"
+            :class="{ active: selectedGroup === name }"
+            @click="selectGroup(name)"
+        ><h4>{{ name }}</h4></div>
+      </VueDraggable>
+    </div>
   </div>
   <table class="table" v-if="showTables" style="margin-top: 10px">
     <thead>
@@ -89,6 +113,7 @@ import JSConfetti from 'js-confetti'
 import {useI18n} from "vue-i18n";
 import { useUploaderI18n } from '@/composables/useUploaderI18n'
 import UploadUtil from "@/components/UploadUtil.vue";
+import { VueDraggable } from 'vue-draggable-plus';
 
 const selectedFile = ref(null);
 const selectGroupName = ref([]);
@@ -99,16 +124,16 @@ const showTables = ref(false);
 
 //下載相關
 const finalDataMap = ref(new Map());
-const finalMapForBackend = ref(new Map());
-const everSelectedOptions = ref(new Set()); //使用 Set 來追蹤曾經選擇過的選項
+// const finalMapForBackend = ref(new Map());
+// const everSelectedOptions = ref(new Set()); //使用 Set 來追蹤曾經選擇過的選項
 
 const Toast = SweetAlert2.mixin({
   toast: true,
   position: 'top-end',
   showConfirmButton: false,
-  onOpen: toast => {
-    toast.addEventListener('mouseenter', SweetAlert2.stopTimer())
-    toast.addEventListener('mouseleave', SweetAlert2.resumeTimer())
+  didOpen: toast => {
+    toast.addEventListener('mouseenter', SweetAlert2.stopTimer)
+    toast.addEventListener('mouseleave', SweetAlert2.resumeTimer)
   }
 });
 
@@ -116,6 +141,7 @@ const Toast = SweetAlert2.mixin({
 const isDragging = ref(false);
 
 const confetti = new JSConfetti();
+const hasShownConfetti = ref(false)
 
 const loading = ref(false);
 
@@ -150,7 +176,8 @@ watch(
 
         const response = await axiosApi.post("/totalLayer/excelDataToTable", formData);
         octTotalLayerData.value = response.data;
-        // console.log(octTotalLayerData.value);
+        finalDataMap.value = response.data;
+        console.log(octTotalLayerData.value);
 
         const setGroupNames = new Set([]);
         for(let i = 0; i < octTotalLayerData.value.length; i++){
@@ -218,32 +245,44 @@ watch(
       for(let i = 0; i < result.length; i++ ){
         resultMap.set(result[i].groupName, result[i].data);
       }
-      finalDataMap.value = resultMap;
+      // finalDataMap.value = resultMap;
       // console.log(result)
     }
 )
 
-//監控 finalDataMap，下拉選單一切換
 watch(
-    () => finalDataMap.value,
-    () => {
-      finalDataMap.value.forEach((key, value) => {
-        finalMapForBackend.value.set(value, key);
-      })
-    }
-)
+    () => selectGroupName.value.length,
+    (newLength, oldLength) => {
+      if (newLength > 0 && oldLength === 0 && !hasShownConfetti.value) {
+        showConfetti()
+        hasShownConfetti.value = true
+      }
+    })
+
+//監控 finalDataMap，下拉選單一切換
+// watch(
+//     () => finalDataMap.value,
+//     () => {
+//       finalDataMap.value.forEach((key, value) => {
+//         finalMapForBackend.value.set(value, key);
+//       })
+//     }
+// )
 
 watch(
     () => selectedGroup.value,
     () => {
       showTables.value = true;
-      showConfetti()
+      hasShownConfetti.value = false
+      // showConfetti()
     }
 );
 
 const downloadOCTTotalLayerData = async () => {
+  const orderedMap = buildOrderedMapForBackend()
   let data = {
-    "octTotalLayerDataMapSet" : Object.fromEntries(finalMapForBackend.value)
+    // "octTotalLayerDataMapSet" : Object.fromEntries(finalMapForBackend.value)
+    "octTotalLayerDataMapSet" : Object.fromEntries(orderedMap)
   };
 
   const response = await axiosApi.post("/totalLayer/downloadOCTTotalLayerData", data, {
@@ -279,12 +318,31 @@ const downloadOCTTotalLayerData = async () => {
 }
 
 //監聽 selectedOption 的變化，追蹤曾經選擇過的選項
-const trackSelection = () => {
-  if (selectedGroup.value) {
-    everSelectedOptions.value.add(selectedGroup.value);
-    // console.log(everSelectedOptions.value)
-  }
-};
+// const trackSelection = () => {
+//   if (selectedGroup.value) {
+//     everSelectedOptions.value.add(selectedGroup.value);
+//     // console.log(everSelectedOptions.value)
+//   }
+// };
+
+const selectGroup = (name) => {
+  selectedGroup.value = name
+}
+
+const buildOrderedMapForBackend = () => {
+  const orderedMap = new Map()
+
+  selectGroupName.value.forEach(groupPrefix => {
+    // 依照拖曳順序找對應資料
+    finalDataMap.value.forEach((data) => {
+      if (data.groupName.startsWith(groupPrefix + '_')) {
+        orderedMap.set(data.groupName, data.octtoTalLayerdataList)
+      }
+    })
+  })
+
+  return orderedMap
+}
 
 //判斷是否所有選項都曾被選取過
 const isAllEverSelected = computed(() => {
@@ -303,8 +361,7 @@ const copyLeftEyeTable = () => {
     Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer: 1000,
-      allowOutsideClick: false
+      timer: 1000
     });
   }).catch(() => {
     SweetAlert2.fire('複製失敗', '表格值複製失敗', 'error');
@@ -323,8 +380,7 @@ const copyRightEyeTable = () => {
     Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer: 1000,
-      allowOutsideClick: false
+      timer: 1000
     });
   }).catch(() => {
     SweetAlert2.fire('複製失敗', '表格值複製失敗', 'error');
@@ -340,8 +396,7 @@ const copyTable = () => {
     Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer:1000,
-      allowOutsideClick: false
+      timer:1000
     })
   }).catch(() => {
     SweetAlert2.fire('複製失敗', '表格值複製失敗', 'error');
@@ -395,5 +450,41 @@ function showConfetti() {
 .table tr:last-child {
   border-bottom: none;
   /* 移除最後一行的底部邊框 */
+}
+
+.group-area {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.group-list {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.group-p {
+  margin-top: 3px;
+}
+
+.group-item {
+  padding: 3px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.group-item:hover:not(.active) {
+  background-color: #f1f3f5;
+}
+
+.group-item.active {
+  background-color: #e2e6ea;
+  font-weight: 500;
+}
+
+.group-item:active {
+  transform: scale(0.98);
 }
 </style>

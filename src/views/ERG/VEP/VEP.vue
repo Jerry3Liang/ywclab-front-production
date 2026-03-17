@@ -106,9 +106,9 @@ const Toast = Swal.mixin({
   position: 'top-end',
   showConfirmButton: false,
   timer:800,
-  onOpen: toast => {
-    toast.addEventListener('mouseenter', Swal.stopTimer())
-    toast.addEventListener('mouseleave', Swal.resumeTimer())
+  didOpen: toast => {
+    toast.addEventListener('mouseenter', Swal.stopTimer)
+    toast.addEventListener('mouseleave', Swal.resumeTimer)
   }
 });
 
@@ -246,8 +246,7 @@ const copyTableRightEyeP1N1Values = () => {
     Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer:1000,
-      allowOutsideClick: false
+      timer:1000
     })
   }).catch(() => {
     Swal.fire('複製失敗', '表格值複製失敗', 'error');
@@ -262,8 +261,7 @@ const copyTableRightEyeN1P2Values = () => {
     Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer:1000,
-      allowOutsideClick: false
+      timer:1000
     })
   }).catch(() => {
     Swal.fire('複製失敗', '表格值複製失敗', 'error');
@@ -279,8 +277,7 @@ const copyTableLeftEyeP1N1Values = () => {
     Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer:1000,
-      allowOutsideClick: false
+      timer:1000
     })
   }).catch(() => {
     Swal.fire('複製失敗', '表格值複製失敗', 'error');
@@ -296,8 +293,7 @@ const copyTableLeftEyeN1P2Values = () => {
     Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer:1000,
-      allowOutsideClick: false
+      timer:1000
     })
   }).catch(() => {
     Swal.fire('複製失敗', '表格值複製失敗', 'error');
@@ -324,8 +320,7 @@ const copyTableAllEyeP1N1Values = () => {
     Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer: 1000,
-      allowOutsideClick: false
+      timer: 1000
     });
   }).catch(() => {
     Swal.fire('複製失敗', '表格值複製失敗', 'error');
@@ -346,8 +341,7 @@ const copyTableAllEyeN1P2Values = () => {
     Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer: 1000,
-      allowOutsideClick: false
+      timer: 1000
     });
   }).catch(() => {
     Swal.fire('複製失敗', '表格值複製失敗', 'error');

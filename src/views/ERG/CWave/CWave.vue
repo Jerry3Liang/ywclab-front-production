@@ -151,9 +151,9 @@ const Toast = SweetAlert2.mixin({
   position: 'top-end',
   showConfirmButton: false,
   timer:800,
-  onOpen: toast => {
-    toast.addEventListener('mouseenter', SweetAlert2.stopTimer())
-    toast.addEventListener('mouseleave', SweetAlert2.resumeTimer())
+  didOpen: toast => {
+    toast.addEventListener('mouseenter', SweetAlert2.stopTimer)
+    toast.addEventListener('mouseleave', SweetAlert2.resumeTimer)
   }
 });
 
@@ -194,7 +194,7 @@ watch(
 
         const response = await axiosApi.post("/c_wave/excelDataToTable", formData);
         cWaveRawData.value = response.data;
-        // console.log(cWaveRawData.value);
+        console.log(cWaveRawData.value);
 
         const setGroupNames = new Set([]);
         for(let i = 0; i < cWaveRawData.value.length; i++){
@@ -385,8 +385,7 @@ const copyTableRightEyeValues = () => {
     Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer:1000,
-      allowOutsideClick: false
+      timer:1000
     })
   }).catch(() => {
     SweetAlert2.fire('複製失敗', '表格值複製失敗', 'error');
@@ -404,8 +403,7 @@ const copyTableLeftEyeValues = () => {
     Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer:1000,
-      allowOutsideClick: false
+      timer:1000
     })
   }).catch(() => {
     SweetAlert2.fire('複製失敗', '表格值複製失敗', 'error');
@@ -440,8 +438,7 @@ const copyTableAllEyeValues = () => {
     Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer: 1000,
-      allowOutsideClick: false
+      timer: 1000
     });
   }).catch(() => {
     SweetAlert2.fire('複製失敗', '表格值複製失敗', 'error');

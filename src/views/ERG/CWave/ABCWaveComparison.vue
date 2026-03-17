@@ -187,14 +187,13 @@ const fixedColors = [
   "#2828FF", "#C07AB8", "#E2C2DE", "#D1E9E9", "#FFFF93", "#CDCD9A", "#FF33D6"
 ];
 
-
 const Toast = SweetAlert2.mixin({
   toast: true,
   position: 'top-end',
   showConfirmButton: false,
-  onOpen: toast => {
-    toast.addEventListener('mouseenter', SweetAlert2.stopTimer())
-    toast.addEventListener('mouseleave', SweetAlert2.resumeTimer())
+  didOpen: toast => {
+    toast.addEventListener('mouseenter', SweetAlert2.stopTimer)
+    toast.addEventListener('mouseleave', SweetAlert2.resumeTimer)
   }
 });
 
@@ -599,8 +598,7 @@ const copySelectedCWaveData = async () => {
     await Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer: 1000,
-      allowOutsideClick: false
+      timer: 1000
     })
   } catch (error) {
     console.error('Failed to copy text: ', error);
@@ -665,8 +663,7 @@ const copySelectedABWaveData = async () => {
     await Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer: 1000,
-      allowOutsideClick: false
+      timer: 1000
     })
   } catch (error) {
     console.error('Failed to copy text: ', error);
@@ -710,8 +707,7 @@ const copyCMilliSecond = async () => {
     await Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer: 1000,
-      allowOutsideClick: false
+      timer: 1000
     })
   } catch (error) {
     console.error('Failed to copy text: ', error);
@@ -732,8 +728,7 @@ const copyABMilliSecond = async () => {
     await Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer: 1000,
-      allowOutsideClick: false
+      timer: 1000
     })
   } catch (error) {
     console.error('Failed to copy text: ', error);
