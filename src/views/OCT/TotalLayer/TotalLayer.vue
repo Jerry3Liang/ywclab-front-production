@@ -279,7 +279,7 @@ watch(
 );
 
 const downloadOCTTotalLayerData = async () => {
-  const orderedMap = buildOrderedMapForBackend()
+  const orderedMap = buildOrderedMapForBackend();
   let data = {
     // "octTotalLayerDataMapSet" : Object.fromEntries(finalMapForBackend.value)
     "octTotalLayerDataMapSet" : Object.fromEntries(orderedMap)
@@ -345,9 +345,9 @@ const buildOrderedMapForBackend = () => {
 }
 
 //判斷是否所有選項都曾被選取過
-const isAllEverSelected = computed(() => {
-  return selectGroupName.value.every(option => everSelectedOptions.value.has(option));
-});
+// const isAllEverSelected = computed(() => {
+//   return selectGroupName.value.every(option => everSelectedOptions.value.has(option));
+// });
 
 const copyLeftEyeTable = () => {
   const filteredTableData = filteredData.value.filter(data =>
