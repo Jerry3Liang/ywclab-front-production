@@ -1,7 +1,7 @@
 <template>
   <h1 style="padding-bottom: 5px">{{$t('OPsTitle')}}</h1>
   <div style="display: flex; flex-wrap: wrap; width: 100%;">
-    <div class="input-group" style="width: 540px">
+    <div class="input-group" style="width: 785px">
       <upload-util
           :i18nText="i18nText"
           :disabled="showTables"
@@ -20,88 +20,169 @@
 <!--        <strong>Loading...</strong>-->
 <!--        <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>-->
 <!--      </div>-->
-      <select class="form-select" style="width: 130px; border-color: green; color: green" v-if="selectedFile && loading === false" v-model="selectedGroup" @change="trackSelection">
-        <option value="null" selected>{{$t('DropDownSelect')}}</option>
-        <option v-for="(name, index) in selectGroupName" :key="index" :value="name">{{name}}</option>
-      </select>
+<!--      <select class="form-select" style="width: 130px; border-color: green; color: green" v-if="selectedFile && loading === false" v-model="selectedGroup" @change="trackSelection">-->
+<!--        <option value="null" selected>{{$t('DropDownSelect')}}</option>-->
+<!--        <option v-for="(name, index) in selectGroupName" :key="index" :value="name">{{name}}</option>-->
+<!--      </select>-->
       <button class="btn btn-outline-success"
               type="button"
               @click="clearInput"
               v-if="selectedFile">{{$t('ResetButton')}}</button>
+      <button class="btn btn-outline-success"
+              id="inputGroup-sizing-default"
+              type="button"
+              @click="downloadOPsData"
+              v-if="showTables && isAllAnalyzed"
+              style="border-radius: 0 5px 5px 0">{{$t('DownloadButton')}}</button>
+      <b v-if="showCharts" style="margin-left: 5px; margin-top: 10px; color: #bb2d3b">(可拖移組別決定 Excel 呈現順序)</b>
     </div>
-    <button class="btn btn-outline-success"
-            id="inputGroup-sizing-default"
-            type="button"
-            @click="downloadOPsData"
-            v-if="showTables && isAllEverSelected"
-            style="margin-left: 10px; border-radius: 30px">{{$t('DownloadButton')}}</button>
+  </div>
+  <div v-if="selectedFile" class="group-area">
+    <div class="d-flex align-items-center form-control" v-if="loading" style="width: 130px; border: none; color: green">
+      <strong>{{ i18nText.uploadingText }}</strong>
+      <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>
+    </div>
+    <div v-if="selectedFile && loading === false" class="group-list">
+      <h4 class="group-p">請點擊組別顯示數據 : </h4>
+      <VueDraggable
+          v-model="selectGroupName"
+          class="group-list"
+          item-key="name"
+          animation="200"
+      >
+        <div
+            v-for="(name, index) in selectGroupName"
+            :key="index"
+            class="group-item"
+            :class="{ active: selectedGroup === name }"
+            @click="selectGroup(name)"
+        ><h4>{{ name }}</h4></div>
+      </VueDraggable>
+    </div>
   </div>
 
   <div v-for="(data, index) in filteredData" :key="index" v-if="showCharts" class="row">
     <div class="card-content-image" style="padding-bottom: 40px; border-color: #a1ff94">
-      <canvas :id="'rightEye' + index" ></canvas>
-      <div class="input-group input-group-sm" style="width: 320px; margin-bottom: 10px">
-        <span id="inputGroup-sizing-lg" class="input-group-text" style="border: none; background-color: #dcfce7">{{$t('TheLowestPoint')}}：</span>
-        <select class="ROPs" :id="'rightEye' + index" v-model="rightSelect[index]" :disabled="showTables" style="border: none; background-color: #dcfce7">
-          <option value="LOP3">{{$t('OP3Trough')}}</option>
-          <option value="LOP4">{{$t('OP4Trough')}}</option>
-        </select>
-      </div>
-    </div>
-      <table v-if="showTables">
-        <thead>
-        <tr>
-          <th>{{$t('RE')}}</th>
-          <th>{{$t('Value')}}</th>
-          <th>ms</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr v-for="(value, i) in OPsAnalyzedData[index]?.rightEyeOPsData" :key="'r'+i">
-          <td style="user-select: none">OP{{i+1}}</td>
-          <td style="user-select: none">{{value}}</td>
-          <td style="user-select: none">{{OPsAnalyzedData[index]?.rightEyeOPsMilliSec[i]}}</td>
-        </tr>
-        </tbody>
-        <button class="btn btn-outline-success"
-                type="button"
-                @click="copyToClipboard(getTableValues(index, 'right'))"
-                style="margin-left: 5px; margin-bottom: 5px">{{$t('copyValue')}}</button>
-      </table>
-    <div class="card-content-image" style="padding-bottom: 40px; border-color: #a1ff94">
       <canvas :id="'leftEye' + index" ></canvas>
       <div class="input-group input-group-sm" style="width: 320px; margin-bottom: 10px">
         <span class="input-group-text" id="inputGroup-sizing-lg" style="border: none; background-color: #dcfce7">{{$t('TheLowestPoint')}}：</span>
-        <select class="LOPs" :id="'leftEye' + index" v-model="leftSelect[index]" :disabled="showTables" style="border: none; background-color: #dcfce7">
+        <select
+            class="LOPs"
+            :id="'leftEye' + index"
+            v-model="leftSelect[index]"
+            :disabled="showTables"
+            style="border: none; background-color: #dcfce7"
+            :class="{ 'select-error': selectErrors[index + '_left'] }"
+            @change="delete selectErrors[index + '_left']"
+        >
           <option value="LOP3">{{$t('OP3Trough')}}</option>
           <option value="LOP4">{{$t('OP4Trough')}}</option>
         </select>
+        <div v-if="selectErrors[index + '_left']" class="select-error-text">未選擇</div>
       </div>
     </div>
-      <table v-if="showTables">
+    <div class="tableContainer">
+      <table v-if="showTables && isAnalyzedGroupData" class="medical-table">
         <thead>
         <tr>
           <th>{{$t('LE')}}</th>
-          <th>{{$t('Value')}}</th>
-          <th>ms</th>
+          <th v-for="(v, i) in OPsAnalyzedData[index]?.leftEyeOPsData"
+              :key="'h'+i">
+            OP{{ i + 1 }}
+          </th>
+          <th>OP2+3+4</th>
+          <th>Total</th>
         </tr>
         </thead>
         <tbody>
-        <tr v-for="(value, i) in OPsAnalyzedData[index]?.leftEyeOPsData" :key="'l'+i">
-          <td style="user-select: none">OP{{i+1}}</td>
-          <td style="user-select: none">{{value}}</td>
-          <td style="user-select: none">{{OPsAnalyzedData[index]?.leftEyeOPsMilliSec[i]}}</td>
+        <tr>
+          <td style="font-weight: 600">{{$t('Value')}} (µV)</td>
+          <td v-for="(v, i) in OPsAnalyzedData[index]?.leftEyeOPsData"
+              :key="'v'+i">
+            {{ v === 0 ? 'N/A' : v}}
+          </td>
+          <td>{{ OPsAnalyzedData[index]?.leftEyeOPs234 === 0 ? 'N/A' : OPsAnalyzedData[index]?.leftEyeOPs234 }}</td>
+          <td>{{ OPsAnalyzedData[index]?.leftEyeOPsTotal === 0 ? 'N/A' : OPsAnalyzedData[index]?.leftEyeOPsTotal }}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 600">ms</td>
+          <td v-for="(v, i) in OPsAnalyzedData[index]?.leftEyeOPsMilliSec"
+              :key="'m'+i">
+            {{ v === 0 ? 'N/A' : v}}
+          </td>
+          <td>N/A</td>
+          <td>N/A</td>
         </tr>
         </tbody>
+      </table>
+      <div v-if="showTables" class="copy-btn-wrapper">
         <button class="btn btn-outline-success"
                 type="button"
-                @click="copyToClipboard(getTableValues(index, 'left'))"
-                style="margin-left: 5px; margin-bottom: 5px">{{$t('copyValue')}}</button>
+                @click="copyToClipboard(getTableValues(index, 'left'))">{{$t('copyValue')}}</button>
+      </div>
+    </div>
+    <div class="card-content-image" style="padding-bottom: 40px; border-color: #a1ff94">
+      <canvas :id="'rightEye' + index" ></canvas>
+      <div class="input-group input-group-sm" style="width: 320px; margin-bottom: 10px">
+        <span id="inputGroup-sizing-lg" class="input-group-text" style="border: none; background-color: #dcfce7">{{$t('TheLowestPoint')}}：</span>
+        <select
+            class="ROPs"
+            :id="'rightEye' + index"
+            v-model="rightSelect[index]"
+            :disabled="showTables"
+            style="border: none; background-color: #dcfce7"
+            :class="{ 'select-error': selectErrors[index + '_right'] }"
+            @change="delete selectErrors[index + '_right']">
+          <option value="LOP3">{{$t('OP3Trough')}}</option>
+          <option value="LOP4">{{$t('OP4Trough')}}</option>
+        </select>
+        <div v-if="selectErrors[index + '_right']" class="select-error-text">未選擇</div>
+      </div>
+    </div>
+    <div class="tableContainer">
+      <table v-if="showTables && isAnalyzedGroupData" class="medical-table">
+        <thead>
+        <tr>
+          <th>{{$t('RE')}}</th>
+          <th v-for="(v, i) in OPsAnalyzedData[index]?.rightEyeOPsData"
+              :key="'h'+i">
+            OP{{ i + 1 }}
+          </th>
+          <th>OP2+3+4</th>
+          <th>Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td style="font-weight: 600">{{$t('Value')}} (µV)</td>
+          <td v-for="(v, i) in OPsAnalyzedData[index]?.rightEyeOPsData"
+              :key="'v'+i">
+            {{ v === 0 ? 'N/A' : v}}
+          </td>
+          <td>{{ OPsAnalyzedData[index]?.rightEyeOPs234 === 0 ? 'N/A' : OPsAnalyzedData[index]?.rightEyeOPs234 }}</td>
+          <td>{{ OPsAnalyzedData[index]?.rightEyeOPsTotal === 0 ? 'N/A' : OPsAnalyzedData[index]?.rightEyeOPsTotal }}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 600">ms</td>
+          <td v-for="(v, i) in OPsAnalyzedData[index]?.rightEyeOPsMilliSec"
+              :key="'m'+i">
+            {{ v === 0 ? 'N/A' : v}}
+          </td>
+          <td>N/A</td>
+          <td>N/A</td>
+        </tr>
+        </tbody>
       </table>
+      <div v-if="showTables" class="copy-btn-wrapper">
+        <button class="btn btn-outline-success"
+                type="button"
+                @click="copyToClipboard(getTableValues(index, 'right'))">{{$t('copyValue')}}</button>
+      </div>
+    </div>
   </div>
   <button class="btn btn-outline-success"
           @click="analyzeOPsData()"
-          v-if="showCharts&& !OPsAnalyzedData.length">{{$t('Analyze')}}</button>
+          v-if="showCharts && !OPsAnalyzedData.length">{{$t('Analyze')}}</button>
   <button class="btn btn-outline-success"
           @click="copyAllLeftEyeValues"
           v-if="showCharts && OPsAnalyzedData.length">{{$t('LeftCopyButton')}}</button>
@@ -128,6 +209,7 @@ import JSConfetti from 'js-confetti'
 import {useI18n} from "vue-i18n";
 import { useUploaderI18n } from '@/composables/useUploaderI18n'
 import UploadUtil from "@/components/UploadUtil.vue";
+import {VueDraggable} from "vue-draggable-plus";
 
 const selectedFile = ref(null);
 const OPsRawData = ref([]);
@@ -141,20 +223,23 @@ const rightSelect = ref({});
 const leftSelect = ref({});
 const OPsAnalyzedData = ref([]);
 const showTables = ref(false);
+const analyzedGroupData = ref(new Map());//將按過 "分析" 按鈕的結果存入 Map
+const isAnalyzedGroupData = ref(false);
 
 //下載 Excel
 const finalDataMap = ref(new Map());
 const finalMapForBackend = ref(new Map());
 
-const everSelectedOptions = ref(new Set()); //使用 Set 來追蹤曾經選擇過的選項
+//const everSelectedOptions = ref(new Set()); //使用 Set 來追蹤曾經選擇過的選項
 
+//SweetAlert2 樣式
 const Toast = SweetAlert2.mixin({
   toast: true,
   position: 'top-end',
   showConfirmButton: false,
-  onOpen: toast => {
-    toast.addEventListener('mouseenter', SweetAlert2.stopTimer())
-    toast.addEventListener('mouseleave', SweetAlert2.resumeTimer())
+  didOpen: toast => {
+    toast.addEventListener('mouseenter', SweetAlert2.stopTimer)
+    toast.addEventListener('mouseleave', SweetAlert2.resumeTimer)
   }
 });
 
@@ -162,10 +247,14 @@ const Toast = SweetAlert2.mixin({
 const isDragging = ref(false);
 
 const confetti = new JSConfetti();
+const hasShownConfetti = ref(false)
 
 const loading = ref(false);
 
 const { t, locale } = useI18n();
+
+//紀錄未選擇最低點下拉選單
+const selectErrors = ref({})
 
 //接收 UploadUtil.vue 子元件傳回來的 File Change 值
 const backedUploadUtilFileChangeData = (newData) => {
@@ -185,7 +274,7 @@ watch(
     () => selectedFile.value,
     //監聽到後要實作的方法
     async () => {
-      console.log(selectedFile.value)
+      // console.log(selectedFile.value)
       try{
         const formData = new FormData();
         for(let i = 0; i < selectedFile.value.length; i++){
@@ -251,7 +340,6 @@ watch(
     }
 );
 
-
 //filteredData 為 selectGroup 選到的組別名稱的 data
 const filteredData = computed(() => {
   if (selectedGroup.value === 'null') {
@@ -272,6 +360,22 @@ watch(
           destroyCharts();
           initCharts();
         });
+
+        // 如果之前分析過
+        if(analyzedGroupData.value.has(selectedGroup.value)){
+          const groupData = analyzedGroupData.value.get(selectedGroup.value);
+          OPsAnalyzedData.value = groupData.analyzedData;
+          leftSelect.value = JSON.parse(JSON.stringify(groupData.leftSelect));
+          rightSelect.value = JSON.parse(JSON.stringify(groupData.rightSelect));
+          showTables.value = true;
+          isAnalyzedGroupData.value = true;
+        }else{
+          OPsAnalyzedData.value = [];
+          leftSelect.value = {};
+          rightSelect.value = {};
+          showTables.value = false;
+          isAnalyzedGroupData.value = false;
+        }
       } else {
         showCharts.value = false;
       }
@@ -405,6 +509,50 @@ const initCharts = () => {
 };
 
 const analyzeOPsData = async () => {
+
+  if(!validateSelect()){
+    return;
+  }
+  selectErrors.value = {}
+
+  let firstErrorElement = null
+  let hasError = false
+
+  filteredData.value.forEach((data, index) => {
+
+    if (!leftSelect.value[index]) {
+
+      selectErrors.value[`${index}_left`] = true
+      hasError = true
+
+      if (!firstErrorElement) {
+        firstErrorElement = document.getElementById(`leftSelect_${index}`)
+      }
+
+    }
+
+    if (!rightSelect.value[index]) {
+
+      selectErrors.value[`${index}_right`] = true
+      hasError = true
+
+      if (!firstErrorElement) {
+        firstErrorElement = document.getElementById(`rightSelect_${index}`)
+      }
+    }
+  })
+
+  if (hasError) {
+
+    if (firstErrorElement) {
+      firstErrorElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      })
+    } else {
+      return;
+    }}
+
   let data = filteredData.value.map((data, index) => ({
     expGroupName: data.expGroupName,
     rightEyeRawData: data.expRightEyeRawData,
@@ -413,13 +561,35 @@ const analyzeOPsData = async () => {
     rightMinPointSelected: rightSelect.value[index],
     leftMinPointSelected: leftSelect.value[index]
   }));
+
   const response = await axiosApi.post("/ops/analyzeOPs", data);
   showTables.value = true;
+  isAnalyzedGroupData.value = true;
+  // 存入 map
+  analyzedGroupData.value.set(
+      selectedGroup.value,
+      {
+        analyzed: true,
+        analyzedData: response.data,
+        leftSelect: JSON.parse(JSON.stringify(leftSelect.value)),
+        rightSelect: JSON.parse(JSON.stringify(rightSelect.value))
+      });
   OPsAnalyzedData.value = response.data;
   // console.log(OPsAnalyzedData.value)
   showConfetti();
   // scrollToTop();
 }
+
+const isAllAnalyzed = computed(() => {
+
+  if (selectGroupName.value.length === 0) return false;
+
+  return selectGroupName.value.every(group => {
+    const cache = analyzedGroupData.value.get(group);
+    return cache && cache.analyzed === true;
+  });
+
+});
 
 watch(
     () =>OPsAnalyzedData.value,
@@ -434,22 +604,32 @@ watch(
     }
 )
 
-//監控 finalDataMap，下拉選單一切換
 watch(
-    () => finalDataMap.value,
-    () => {
-      finalDataMap.value.forEach((key, value) => {
-        finalMapForBackend.value.set(value, key);
-      })
-    }
-)
+    () => selectGroupName.value.length,
+    (newLength, oldLength) => {
+      if (newLength > 0 && oldLength === 0 && !hasShownConfetti.value) {
+        showConfetti()
+        hasShownConfetti.value = true
+      }
+    })
+//監控 finalDataMap，下拉選單一切換
+// watch(
+//     () => finalDataMap.value,
+//     () => {
+//       finalDataMap.value.forEach((key, value) => {
+//         finalMapForBackend.value.set(value, key);
+//       })
+//     }
+// )
 
 finalMapForBackend.value = finalDataMap.value;
 
 const downloadOPsData = async () => {
   // console.log(finalMapForBackend.value)
+  const orderedMap = buildOrderedMapForBackend();
+  console.log(orderedMap)
   let data = {
-    "opsDataMapSet" : Object.fromEntries(finalMapForBackend.value),
+    "opsDataMapSet" : Object.fromEntries(orderedMap),
   };
 
   const response = await axiosApi.post("/ops/downloadOPsData", data, {
@@ -484,18 +664,58 @@ const downloadOPsData = async () => {
   window.URL.revokeObjectURL(url);
 }
 
-//監聽 selectedOption 的變化，追蹤曾經選擇過的選項
-const trackSelection = () => {
-  if (selectedGroup.value) {
-    everSelectedOptions.value.add(selectedGroup.value);
-    // console.log(everSelectedOptions.value)
-  }
-};
+const selectGroup = (name) => {
+  selectedGroup.value = name
 
-//判斷是否所有選項都曾被選取過
-const isAllEverSelected = computed(() => {
-  return selectGroupName.value.every(option => everSelectedOptions.value.has(option));
-});
+  //清除錯誤
+  selectErrors.value = {}
+}
+
+const buildOrderedMapForBackend = () => {
+  const orderedMap = new Map()
+
+  selectGroupName.value.forEach(groupPrefix => {
+    // 依照拖曳順序找對應資料
+    finalDataMap.value.forEach((data, key) => {
+      console.log(key)
+      console.log(data)
+      if (key.startsWith(groupPrefix + '_')) {
+        orderedMap.set(key, data)
+      }
+    })
+  })
+
+  return orderedMap
+}
+
+function validateSelect(){
+
+  let firstError = null
+
+  filteredData.value.forEach((d,index)=>{
+
+    if(!leftSelect.value[index]){
+      selectErrors.value[index+"_left"]=true
+      firstError ??= "leftEye"+index
+    }
+
+    if(!rightSelect.value[index]){
+      selectErrors.value[index+"_right"]=true
+      firstError ??= "rightEye"+index
+    }
+
+  })
+
+  if(firstError){
+    document.getElementById(firstError).scrollIntoView({
+      behavior:"smooth",
+      block:"center"
+    })
+    return false
+  }
+
+  return true
+}
 
 const getTableValues = (index, eye) => {
   const analyzedData = OPsAnalyzedData.value[index];
@@ -513,8 +733,7 @@ const copyToClipboard = async (text) => {
     await Toast.fire({
       text: '複製成功',
       icon: 'success',
-      timer:1000,
-      allowOutsideClick: false
+      timer:1000
     })
   } catch (error) {
     console.error('Failed to copy text: ', error);
@@ -537,8 +756,7 @@ const copyAllRightEyeValues = async () => {
     await Toast.fire({
       text: '無可複製的資料',
       icon: 'info',
-      timer: 1000,
-      allowOutsideClick: false
+      timer: 1000
     });
   }
 };
@@ -559,8 +777,7 @@ const copyAllLeftEyeValues = async () => {
     await Toast.fire({
       text: '無可複製的資料',
       icon: 'info',
-      timer: 1000,
-      allowOutsideClick: false
+      timer: 1000
     });
   }
 };
@@ -585,8 +802,7 @@ const copyAllEyeValues = async () => {
     await Toast.fire({
       text: '無可複製的資料',
       icon: 'info',
-      timer: 1000,
-      allowOutsideClick: false
+      timer: 1000
     });
   }
 };
@@ -602,19 +818,19 @@ const destroyCharts = () => {
     chart.destroy();
   });
   charts.value = [];
-  OPsAnalyzedData.value = [];
-  rightSelect.value = {};
-  leftSelect.value = {};
-  showTables.value = false;
+  // OPsAnalyzedData.value = [];
+  // rightSelect.value = {};
+  // leftSelect.value = {};
+  // showTables.value = false;
 };
-
-//回到最上面
 const scrollToTop = () => {
   window.scrollTo({
     top: 0,
     behavior: 'smooth'
   });
 };
+
+//回到最上面
 
 function showConfetti() {
   confetti.addConfetti()
@@ -646,15 +862,95 @@ watch(locale, () => {
   margin-left: 10px;
 }
 
-table {
-  writing-mode: sideways-lr;
-  width: 800px;
-  text-orientation: upright;
-  font-size: 20px;
-  line-height: 1.3;
-  border: 1px solid black;
-  margin: 10px;
-  padding: 10px 10px 30px;
+.medical-table {
+  width: 600px;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 14px;
 }
 
+.medical-table th,
+.medical-table td {
+  border: 1px solid #ccc;
+  padding: 5px;
+  text-align: center;
+}
+
+.medical-table thead {
+  background-color: #f2f2f2;
+  font-weight: 600;
+}
+
+.tableContainer {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.group-area {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.group-list {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.group-p {
+  margin-top: 3px;
+}
+
+.group-item {
+  padding: 3px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.group-item:hover:not(.active) {
+  background-color: #f1f3f5;
+}
+
+.group-item.active {
+  background-color: #e2e6ea;
+  font-weight: 500;
+}
+
+.group-item:active {
+  transform: scale(0.98);
+}
+
+.select-error {
+  border: 2px solid red !important;
+}
+
+.select-error-text {
+  position: absolute;
+  bottom: 130%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #dc3545;
+  color: white;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+/* 箭頭 */
+.select-error-text::after{
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #dc3545 transparent transparent transparent;
+}
 </style>

@@ -1,43 +1,50 @@
 <template>
   <h1 style="padding-bottom: 5px">{{$t('CWaveTitle')}}</h1>
   <div style="display: flex; flex-wrap: wrap; width: 100%;">
-    <div class="input-group" style="width: 540px">
+    <div class="input-group" style="width: 785px">
+      <upload-util
+          :i18nText="i18nText"
+          :disabled="showTables"
+          :loading="loading"
+          :isDragging="isDragging"
+          @file-change="backedUploadUtilFileChangeData"
+      />
       <!-- 限制上傳檔案只能是副檔名為 .xls 及 .xlsx 的 Excel 檔，在 <input> 標籤加入 accept 屬性，值為 MIME type：accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" -->
-      <div class="d-flex align-items-center gap-2">
-        <!-- 隱藏原生 file input -->
-        <input
-            ref="fileInput"
-            type="file"
-            class="form-control"
-            style="display: none"
-            multiple
-            @change="handleFileChange"
-            name="files"
-            :disabled="showTables"
-        />
-        <!-- 自訂按鈕 -->
-        <button
-            class="btn btn-outline-success btn-lg"
-            @click="triggerFileInput"
-            :disabled="showTables"
-            style="border-radius: 5px 0 0 5px">{{$t('chooseFile')}}</button>
+<!--      <div class="d-flex align-items-center gap-2">-->
+<!--        &lt;!&ndash; 隱藏原生 file input &ndash;&gt;-->
+<!--        <input-->
+<!--            ref="fileInput"-->
+<!--            type="file"-->
+<!--            class="form-control"-->
+<!--            style="display: none"-->
+<!--            multiple-->
+<!--            @change="handleFileChange"-->
+<!--            name="files"-->
+<!--            :disabled="showTables"-->
+<!--        />-->
+<!--        &lt;!&ndash; 自訂按鈕 &ndash;&gt;-->
+<!--        <button-->
+<!--            class="btn btn-outline-success btn-lg"-->
+<!--            @click="triggerFileInput"-->
+<!--            :disabled="showTables"-->
+<!--            style="border-radius: 5px 0 0 5px">{{$t('chooseFile')}}</button>-->
 
-        <!-- 顯示選擇結果 -->
-        <div class="text-muted small">
-          <template v-if="fileNames.length">
-            <div
-                class="custom-file-button"
-                @mouseover="showData(fileNames)"
-                @mouseleave="hideData"
-                :data-bs-toggle="isDragging ? '' : 'tooltip'"
-                :data-bs-placement="'bottom'"
-                :title="hoveredItem === fileNames ? fileNames.join('\n') : ''">{{$t('alreadySelected')}}：{{fileNames.length}}{{fileNames.length > 1 ? $t('quantifiers') : $t('quantifier')}}</div>
-          </template>
-          <template v-else>
-            <div class="custom-file-button">{{$t('noFileSelected')}}</div>
-          </template>
-        </div>
-      </div>
+<!--        &lt;!&ndash; 顯示選擇結果 &ndash;&gt;-->
+<!--        <div class="text-muted small">-->
+<!--          <template v-if="fileNames.length">-->
+<!--            <div-->
+<!--                class="custom-file-button"-->
+<!--                @mouseover="showData(fileNames)"-->
+<!--                @mouseleave="hideData"-->
+<!--                :data-bs-toggle="isDragging ? '' : 'tooltip'"-->
+<!--                :data-bs-placement="'bottom'"-->
+<!--                :title="hoveredItem === fileNames ? fileNames.join('\n') : ''">{{$t('alreadySelected')}}：{{fileNames.length}}{{fileNames.length > 1 ? $t('quantifiers') : $t('quantifier')}}</div>-->
+<!--          </template>-->
+<!--          <template v-else>-->
+<!--            <div class="custom-file-button">{{$t('noFileSelected')}}</div>-->
+<!--          </template>-->
+<!--        </div>-->
+<!--      </div>-->
 <!--      <input class="form-control form-control-lg"-->
 <!--             id="formFileLg"-->
 <!--             type="file"-->
@@ -46,40 +53,56 @@
 <!--             name="files"-->
 <!--             style="width: 270px"-->
 <!--             :disabled="showTables">-->
-      <div class="d-flex align-items-center form-control" v-if="loading === true" style="width: 130px; border: solid; color: green">
-        <strong>{{$t('uploading')}}</strong>
-        <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>
-      </div>
-      <select class="form-select" style="width: 130px; border-color: green; color: green" v-if="selectedFile && loading === false" v-model="selectedGroup" @change="trackSelection">
-        <option value="null" selected :disabled="showTables">{{$t('DropDownSelect')}}</option>
-        <option v-for="(name, index) in selectGroupName" :key="index" :value="name">{{name}}</option>
-      </select>
+<!--      <div class="d-flex align-items-center form-control" v-if="loading === true" style="width: 130px; border: solid; color: green">-->
+<!--        <strong>{{$t('uploading')}}</strong>-->
+<!--        <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>-->
+<!--      </div>-->
+<!--      <select class="form-select" style="width: 130px; border-color: green; color: green" v-if="selectedFile && loading === false" v-model="selectedGroup" @change="trackSelection">-->
+<!--        <option value="null" selected :disabled="showTables">{{$t('DropDownSelect')}}</option>-->
+<!--        <option v-for="(name, index) in selectGroupName" :key="index" :value="name">{{name}}</option>-->
+<!--      </select>-->
       <button
           class="btn btn-outline-success"
           type="button"
           @click="clearInput"
           v-if="selectedFile">{{$t('ResetButton')}}</button>
+      <button class="btn btn-outline-success"
+              id="inputGroup-sizing-default"
+              type="button"
+              @click="downloadCWaveTableData"
+              v-if="showTables"
+              style="border-radius: 0 5px 5px 0">{{$t('DownloadButton')}}</button>
+      <b v-if="showTables" style="margin-left: 5px; margin-top: 10px; color: #bb2d3b">(可拖移組別決定 Excel 呈現順序)</b>
     </div>
-<!--    <button class="btn btn-outline-success"-->
-<!--            id="inputGroup-sizing-default"-->
-<!--            type="button"-->
-<!--            @click="downloadCWaveTableData"-->
-<!--            v-if="showTables && isAllEverSelected"-->
-<!--            style="margin-left: 10px; border-radius: 30px">{{$t('DownloadButton')}}</button>-->
   </div>
+  <div v-if="selectedFile" class="group-area">
+    <div class="d-flex align-items-center form-control" v-if="loading" style="width: 130px; border: none; color: green">
+      <strong>{{ i18nText.uploadingText }}</strong>
+      <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>
+    </div>
+    <div v-if="selectedFile && loading === false" class="group-list">
+      <h4 class="group-p">請點擊組別顯示數據 : </h4>
+      <VueDraggable
+          v-model="selectGroupName"
+          class="group-list"
+          item-key="name"
+          animation="200"
+      >
+        <div
+            v-for="(name, index) in selectGroupName"
+            :key="index"
+            class="group-item"
+            :class="{ active: selectedGroup === name }"
+            @click="selectGroup(name)"
+        ><h4>{{ name }}</h4></div>
+      </VueDraggable>
+    </div>
+  </div>
+
   <table class="table" v-if="showTables" style="margin-top: 10px">
     <thead>
     <tr>
       <th scope="col">{{$t('MouseNumber')}}</th>
-      <th scope="col">{{$t('RightEyeDataA')}}</th>
-      <th scope="col">µV</th>
-      <th scope="col">ms</th>
-      <th scope="col">{{$t('RightEyeDataB')}}</th>
-      <th scope="col">µV</th>
-      <th scope="col">ms</th>
-      <th scope="col">{{$t('RightEyeDataC')}}</th>
-      <th scope="col">µV</th>
-      <th scope="col">ms</th>
       <th scope="col">{{$t('LeftEyeDataA')}}</th>
       <th scope="col">µV</th>
       <th scope="col">ms</th>
@@ -89,12 +112,47 @@
       <th scope="col">{{$t('LeftEyeDataC')}}</th>
       <th scope="col">µV</th>
       <th scope="col">ms</th>
+      <th scope="col">{{$t('RightEyeDataA')}}</th>
+      <th scope="col">µV</th>
+      <th scope="col">ms</th>
+      <th scope="col">{{$t('RightEyeDataB')}}</th>
+      <th scope="col">µV</th>
+      <th scope="col">ms</th>
+      <th scope="col">{{$t('RightEyeDataC')}}</th>
+      <th scope="col">µV</th>
+      <th scope="col">ms</th>
     </tr>
     </thead>
     <tbody>
     <tr v-for="(entry, index) in combinedData" :key="index">
       <td style="user-select: none">{{entry.groupName}}</td>
-      <td v-for="(value, i) in entry.data" :key="i" :class="{'highlight-column': [1, 4, 7, 10, 13, 16].includes(i)}" style="user-select: none">{{value}}</td>
+      <!-- Left Eye (LE) -->
+      <td style="user-select: none">{{ entry.data[1].awave.waveName }}</td>
+      <td class="highlight-column" style="user-select: none">{{ entry.data[1].awave.value }}</td>
+      <td style="user-select: none">{{ entry.data[1].awave.milliSeconds }}</td>
+
+      <td style="user-select: none">{{ entry.data[1].bwave.waveName }}</td>
+      <td class="highlight-column" style="user-select: none">{{ entry.data[1].bwave.value }}</td>
+      <td style="user-select: none">{{ entry.data[1].bwave.milliSeconds }}</td>
+
+      <td style="user-select: none">{{ entry.data[1].cwave.waveName }}</td>
+      <td class="highlight-column" style="user-select: none">{{ entry.data[1].cwave.value }}</td>
+      <td style="user-select: none">{{ entry.data[1].cwave.milliSeconds }}</td>
+
+      <!-- Right Eye (RE) -->
+      <td style="user-select: none">{{ entry.data[0].awave.waveName }}</td>
+      <td class="highlight-column" style="user-select: none">{{ entry.data[0].awave.value }}</td>
+      <td style="user-select: none">{{ entry.data[0].awave.milliSeconds }}</td>
+
+      <td style="user-select: none">{{ entry.data[0].bwave.waveName }}</td>
+      <td class="highlight-column" style="user-select: none">{{ entry.data[0].bwave.value }}</td>
+      <td style="user-select: none">{{ entry.data[0].bwave.milliSeconds }}</td>
+
+      <td style="user-select: none">{{ entry.data[0].cwave.waveName }}</td>
+      <td class="highlight-column" style="user-select: none">{{ entry.data[0].cwave.value }}</td>
+      <td style="user-select: none">{{ entry.data[0].cwave.milliSeconds }}</td>
+
+<!--      <td v-for="(value, i) in entry.data" :key="i" :class="{'highlight-column': [1, 4, 7, 10, 13, 16].includes(i)}" style="user-select: none">{{value}}</td>-->
     </tr>
     </tbody>
   </table>
@@ -125,10 +183,15 @@ import axiosApi from '@/plugins/axios.js';
 import {computed, ref, watch} from 'vue';
 import SweetAlert2 from 'sweetalert2';
 import JSConfetti from 'js-confetti'
+import {useI18n} from "vue-i18n";
+import { useUploaderI18n } from '@/composables/useUploaderI18n';
+import UploadUtil from "@/components/UploadUtil.vue";
+import {VueDraggable} from "vue-draggable-plus";
 
-const fileInput = ref(null)
+
+//const fileInput = ref(null)
 //滑鼠移入顯示檔名
-const fileNames = ref([])
+//const fileNames = ref([])
 
 const selectedFile = ref(null);
 const selectGroupName = ref([]);
@@ -137,14 +200,15 @@ const selectedGroup = ref(null);
 
 const showTables = ref(false);
 
-const finalDataMap = ref(new Map());
-const finalExpDateMap = ref(new Map());
-const finalLuxMap = ref(new Map());
-const finalMapForBackend = ref(new Map());
-const finalExpDateMapForBackend = ref(new Map());
-const finalLuxMapForBackend = ref(new Map());
+//下載相關
+// const finalDataMap = ref(new Map());
+// const finalExpDateMap = ref(new Map());
+// const finalLuxMap = ref(new Map());
+// const finalMapForBackend = ref(new Map());
+// const finalExpDateMapForBackend = ref(new Map());
+// const finalLuxMapForBackend = ref(new Map());
 
-const everSelectedOptions = ref(new Set()); //使用 Set 來追蹤曾經選擇過的選項
+// const everSelectedOptions = ref(new Set()); //使用 Set 來追蹤曾經選擇過的選項
 
 const Toast = SweetAlert2.mixin({
   toast: true,
@@ -157,27 +221,30 @@ const Toast = SweetAlert2.mixin({
   }
 });
 
-const confetti = new JSConfetti()
+
+const confetti = new JSConfetti();
+const hasShownConfetti = ref(false);
 
 const loading = ref(false);
 
+const { t, locale } = useI18n();
+
 //滑鼠移入移出
-const hoveredItem = ref(null);
+//const hoveredItem = ref(null);
 const isDragging = ref(false);
 
 // const onFileChange = async (event) => {
 //   selectedFile.value = event.target.files;
 // };
 
-const handleFileChange = async (event) => {
-  selectedFile.value = event.target.files;
-  fileNames.value = Array.from(selectedFile.value).map(file => file.name)
+//接收 UploadUtil.vue 子元件傳回來的 File Change 值
+const backedUploadUtilFileChangeData = (newData) => {
+  let selectedFiles = [];
+  Object.assign(selectedFiles, newData);
+  selectedFile.value = selectedFiles;
 }
 
-const triggerFileInput = () => {
-  fileInput.value?.click()
-}
-
+const { i18nText } = useUploaderI18n();
 
 watch(
     //要監聽的物件
@@ -261,74 +328,111 @@ const filteredData = computed(() => {
 const combinedData = computed(() => {
   const result = [];
   const resultMap = new Map();
-  const resultExpDateMap = new Map();
-  const resultLuxMap = new Map();
+  // const resultExpDateMap = new Map();
+  // const resultLuxMap = new Map();
   filteredData.value.forEach((data) => {
-    result.push({ groupName: data.groupName, data: data.eyeDataOne, expDate: data.expDate, lux: data.lux });
-    result.push({ groupName: data.groupName, data: data.eyeDataTwo, expDate: data.expDate, lux: data.lux });
+    result.push({ groupName: data.groupName, data: data.eyeDataOne });
+    result.push({ groupName: data.groupName, data: data.eyeDataTwo });
   });
 
   for(let i = 0; i < result.length; i += 2 ){
     resultMap.set(result[i].groupName + '-1', result[i].data);
     resultMap.set(result[i + 1].groupName + '-2', result[i + 1].data);
-    resultExpDateMap.set(result[i].groupName + '-1', result[i].expDate);
-    resultExpDateMap.set(result[i + 1].groupName + '-2', result[i + 1].expDate);
-    resultLuxMap.set(result[i].groupName + '-1', result[i].lux);
-    resultLuxMap.set(result[i + 1].groupName + '-2', result[i + 1].lux);
   }
-
-  finalDataMap.value = resultMap;
-  finalExpDateMap.value = resultExpDateMap;
-  finalLuxMap.value = resultLuxMap;
 
   return result;
 });
 
+// const combinedData = computed(() => {
+//   const result = [];
+//   const resultMap = new Map();
+  // const resultExpDateMap = new Map();
+  // const resultLuxMap = new Map();
+  // filteredData.value.forEach((data) => {
+  //   result.push({ groupName: data.groupName, data: data.eyeDataOne });
+  //   result.push({ groupName: data.groupName, data: data.eyeDataTwo });
+  // });
+
+  // filteredData.value.forEach((data) => {
+  //   result.push({ groupName: data.groupName, data: data.eyeDataOne, expDate: data.expDate, lux: data.lux });
+  //   result.push({ groupName: data.groupName, data: data.eyeDataTwo, expDate: data.expDate, lux: data.lux });
+  // });
+
+  // for(let i = 0; i < result.length; i += 2 ){
+  //   resultMap.set(result[i].groupName + '-1', result[i].data);
+  //   resultMap.set(result[i + 1].groupName + '-2', result[i + 1].data);
+    // resultExpDateMap.set(result[i].groupName + '-1', result[i].expDate);
+    // resultExpDateMap.set(result[i + 1].groupName + '-2', result[i + 1].expDate);
+    // resultLuxMap.set(result[i].groupName + '-1', result[i].lux);
+    // resultLuxMap.set(result[i + 1].groupName + '-2', result[i + 1].lux);
+  // }
+
+  // finalDataMap.value = resultMap;
+  // console.log(finalDataMap.value)
+  // finalExpDateMap.value = resultExpDateMap;
+  // finalLuxMap.value = resultLuxMap;
+
+//   return result;
+// });
+
 //監控 finalDataMap，下拉選單一切換
-watch(
-    () => finalDataMap.value,
-    () => {
-      finalDataMap.value.forEach((key, value) => {
-        finalMapForBackend.value.set(value, key);
-      })
-    }
-);
+// watch(
+//     () => finalDataMap.value,
+//     () => {
+//       finalDataMap.value.forEach((key, value) => {
+//         finalMapForBackend.value.set(value, key);
+//       })
+//     }
+// );
 
 //監控 finalExpDateMap，下拉選單一切換
-watch(
-    () => finalExpDateMap.value,
-    () => {
-      finalExpDateMap.value.forEach((key, value) => {
-        finalExpDateMapForBackend.value.set(value, key);
-      })
-    }
-);
+// watch(
+//     () => finalExpDateMap.value,
+//     () => {
+//       finalExpDateMap.value.forEach((key, value) => {
+//         finalExpDateMapForBackend.value.set(value, key);
+//       })
+//     }
+// );
 
 //監控 finalLuxMap，下拉選單一切換
+// watch(
+//     () => finalLuxMap.value,
+//     () => {
+//       finalLuxMap.value.forEach((key, value) => {
+//         finalLuxMapForBackend.value.set(value, key);
+//       })
+//     }
+// );
+
 watch(
-    () => finalLuxMap.value,
-    () => {
-      finalLuxMap.value.forEach((key, value) => {
-        finalLuxMapForBackend.value.set(value, key);
-      })
-    }
-);
+    () => selectGroupName.value.length,
+    (newLength, oldLength) => {
+      if (newLength > 0 && oldLength === 0 && !hasShownConfetti.value) {
+        showConfetti()
+        hasShownConfetti.value = true
+      }
+    })
 
 watch(
     () => selectedGroup.value,
     () => {
       showTables.value = true;
-      showConfetti()
+      hasShownConfetti.value = false
+      // showConfetti()
     }
 );
 
 const downloadCWaveTableData = async () => {
+  const orderedMap = buildOrderedMapForBackend();
+  console.log(orderedMap)
   let data = {
-    "cWaveTableDataMapSet" : Object.fromEntries(finalMapForBackend.value),
-    "expDateMapSet" : Object.fromEntries(finalExpDateMapForBackend.value),
-    "luxDataMapSet" : Object.fromEntries(finalLuxMapForBackend.value)
+    "cWaveTableDataMapSet" : Object.fromEntries(orderedMap)
+    // "expDateMapSet" : Object.fromEntries(finalExpDateMapForBackend.value),
+    // "luxDataMapSet" : Object.fromEntries(finalLuxMapForBackend.value)
   };
 
+  console.log(JSON.stringify(data, null, 2))
   const response = await axiosApi.post("/c_wave/downloadCWaveTableData", data, {
     headers: {
       'Content-Type': 'application/json'
@@ -361,23 +465,105 @@ const downloadCWaveTableData = async () => {
   window.URL.revokeObjectURL(url);
 }
 
+const selectGroup = (name) => {
+  selectedGroup.value = name
+}
+
 //監聽 selectedOption 的變化，追蹤曾經選擇過的選項
-const trackSelection = () => {
-  if (selectedGroup.value) {
-    everSelectedOptions.value.add(selectedGroup.value);
-    // console.log(everSelectedOptions.value)
-  }
-};
+// const trackSelection = () => {
+//   if (selectedGroup.value) {
+//     everSelectedOptions.value.add(selectedGroup.value);
+//     // console.log(everSelectedOptions.value)
+//   }
+// };
 
 //判斷是否所有選項都曾被選取過
-const isAllEverSelected = computed(() => {
-  return selectGroupName.value.every(option => everSelectedOptions.value.has(option));
-});
+// const isAllEverSelected = computed(() => {
+//   return selectGroupName.value.every(option => everSelectedOptions.value.has(option));
+// });
+
+const buildOrderedMapForBackend = () => {
+  const orderedMap = new Map()
+
+  // const groupMap = new Map();
+  //
+  // // 先 group
+  // cWaveRawData.value.forEach((data) => {
+  //   const groupPrefix = data.groupName.substring(0, data.groupName.indexOf('_'));
+  //
+  //   if (!groupMap.has(groupPrefix)) {
+  //     groupMap.set(groupPrefix, []);
+  //   }
+  //
+  //   groupMap.get(groupPrefix).push(data);
+  // });
+  //
+  // // 每組處理
+  // groupMap.forEach((groupList, groupPrefix) => {
+  //   const leArr = [];
+  //   const reArr = [];
+  //
+  //   groupList.forEach((item) => {
+  //     const allEyes = [...item.eyeDataOne, ...item.eyeDataTwo];
+  //
+  //     allEyes.forEach((eyeData) => {
+  //       const obj = {
+  //         aWave: eyeData.awave,
+  //         bWave: eyeData.bwave,
+  //         cWave: eyeData.cwave
+  //       };
+  //
+  //       if (eyeData.whichEye === 'LE') {
+  //         leArr.push(obj);
+  //       } else if (eyeData.whichEye === 'RE') {
+  //         reArr.push(obj);
+  //       }
+  //     });
+  //   });
+  //
+  //   // ⭐ 這裡才編號（關鍵）
+  //   const leFinal = leArr.map((item, index) => ({
+  //     whichNumber: index + 1,
+  //     ...item
+  //   }));
+  //
+  //   const reFinal = reArr.map((item, index) => ({
+  //     whichNumber: index + 1,
+  //     ...item
+  //   }));
+  //
+  //   orderedMap.set(groupPrefix + '-LE', leFinal);
+  //   orderedMap.set(groupPrefix + '-RE', reFinal);
+  // });
+  const result = [];
+  const resultMap = new Map();
+
+  cWaveRawData.value.forEach((data) => {
+    result.push({ groupName: data.groupName, data: data.eyeDataOne });
+    result.push({ groupName: data.groupName, data: data.eyeDataTwo });
+  });
+
+  for(let i = 0; i < result.length; i += 2 ){
+    resultMap.set(result[i].groupName + '-1', result[i].data);
+    resultMap.set(result[i + 1].groupName + '-2', result[i + 1].data);
+  }
+
+  selectGroupName.value.forEach(groupPrefix => {
+    // 依照拖曳順序找對應資料
+    resultMap.forEach((value, key) => {
+      if (key.startsWith(groupPrefix + '_')) {
+        orderedMap.set(key, value)
+      }
+    })
+  })
+
+  return orderedMap
+}
 
 const copyTableRightEyeValues = () => {
-  const col3 = combinedData.value.map(entry => entry.data[1]);
-  const col6 = combinedData.value.map(entry => entry.data[4]);
-  const col9 = combinedData.value.map(entry => entry.data[7]);
+  const col3 = combinedData.value.map(entry => entry.data[0].awave.value);
+  const col6 = combinedData.value.map(entry => entry.data[0].bwave.value);
+  const col9 = combinedData.value.map(entry => entry.data[0].cwave.value);
 
   const valuesToCopy = [col3, col6, col9].map(col => col.join('\t')).join('\n');
 
@@ -393,9 +579,9 @@ const copyTableRightEyeValues = () => {
 };
 
 const copyTableLeftEyeValues = () => {
-  const col12 = combinedData.value.map(entry => entry.data[10]);
-  const col15 = combinedData.value.map(entry => entry.data[13]);
-  const col18 = combinedData.value.map(entry => entry.data[16]);
+  const col12 = combinedData.value.map(entry => entry.data[1].awave.value);
+  const col15 = combinedData.value.map(entry => entry.data[1].bwave.value);
+  const col18 = combinedData.value.map(entry => entry.data[1].cwave.value);
 
   const valuesToCopy = [col12, col15, col18].map(col => col.join('\t')).join('\n');
 
@@ -416,18 +602,18 @@ const copyTableAllEyeValues = () => {
   let arrayCWave = [];
 
   for(let i = 0; i < combinedData.value.length; i++){
-    arrayAWave.push(combinedData.value[i].data[10]);
-    arrayAWave.push(combinedData.value[i + 1].data[10]);
-    arrayAWave.push(combinedData.value[i].data[1]);
-    arrayAWave.push(combinedData.value[i + 1].data[1]);
-    arrayBWave.push(combinedData.value[i].data[13]);
-    arrayBWave.push(combinedData.value[i + 1].data[13]);
-    arrayBWave.push(combinedData.value[i].data[4]);
-    arrayBWave.push(combinedData.value[i + 1].data[4]);
-    arrayCWave.push(combinedData.value[i].data[16]);
-    arrayCWave.push(combinedData.value[i + 1].data[16]);
-    arrayCWave.push(combinedData.value[i].data[7]);
-    arrayCWave.push(combinedData.value[i + 1].data[7]);
+    arrayAWave.push(combinedData.value[i].data[1].awave.value);
+    arrayAWave.push(combinedData.value[i + 1].data[1].awave.value);
+    arrayAWave.push(combinedData.value[i].data[0].awave.value);
+    arrayAWave.push(combinedData.value[i + 1].data[0].awave.value);
+    arrayBWave.push(combinedData.value[i].data[1].bwave.value);
+    arrayBWave.push(combinedData.value[i + 1].data[1].bwave.value);
+    arrayBWave.push(combinedData.value[i].data[0].bwave.value);
+    arrayBWave.push(combinedData.value[i + 1].data[0].bwave.value);
+    arrayCWave.push(combinedData.value[i].data[1].cwave.value);
+    arrayCWave.push(combinedData.value[i + 1].data[1].cwave.value);
+    arrayCWave.push(combinedData.value[i].data[0].cwave.value);
+    arrayCWave.push(combinedData.value[i + 1].data[0].cwave.value);
     i++;
   }
 
@@ -445,15 +631,15 @@ const copyTableAllEyeValues = () => {
   });
 };
 
-const showData = (item) => {
-  if (!isDragging.value) {
-    hoveredItem.value = item;
-  }
-}
+// const showData = (item) => {
+//   if (!isDragging.value) {
+//     hoveredItem.value = item;
+//   }
+// }
 
-const hideData = () => {
-  hoveredItem.value = null;
-}
+// const hideData = () => {
+//   hoveredItem.value = null;
+// }
 
 //重新整理
 const clearInput = () => {
@@ -474,17 +660,6 @@ function showConfetti() {
 </script>
 
 <style scoped>
-.custom-file-button {
-  display: inline-block;
-  padding: 0.4em 1em;
-  font-size: 20px;
-  margin-left: -9px;
-  color: green;
-  cursor: text;
-  border: solid;
-  height: 48px;
-  user-select: none;
-}
 
 .highlight-column {
   background-color: palegreen;
@@ -525,6 +700,42 @@ function showConfetti() {
 .table tr:last-child {
   border-bottom: none;
   /* 移除最後一行的底部邊框 */
+}
+
+.group-area {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.group-list {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.group-p {
+  margin-top: 3px;
+}
+
+.group-item {
+  padding: 3px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.group-item:hover:not(.active) {
+  background-color: #f1f3f5;
+}
+
+.group-item.active {
+  background-color: #e2e6ea;
+  font-weight: 500;
+}
+
+.group-item:active {
+  transform: scale(0.98);
 }
 
 </style>
