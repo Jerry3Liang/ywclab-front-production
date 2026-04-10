@@ -124,7 +124,7 @@
     </tr>
     </thead>
     <tbody>
-    <tr v-for="(entry, index) in combinedData" :key="index">
+    <tr v-for="entry in combinedData" :key="entry.id">
       <td style="user-select: none">{{entry.groupName}}</td>
       <!-- Left Eye (LE) -->
       <td style="user-select: none">{{ entry.data[1].awave.waveName }}</td>

@@ -61,7 +61,7 @@
     </div>
   </div>
 
-  <div v-for="(data, index) in filteredData" :key="index" v-if="showCharts" class="row">
+  <div v-for="(data, index) in filteredData" :key="data.id" v-if="showCharts" class="row">
     <div class="card-content-image" style="padding-bottom: 40px; border-color: #a1ff94">
       <canvas :id="'leftEye' + index" ></canvas>
       <div class="input-group input-group-sm" style="width: 320px; margin-bottom: 10px">

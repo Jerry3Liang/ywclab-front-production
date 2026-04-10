@@ -54,8 +54,8 @@
           animation="200"
       >
         <div
-            v-for="(name, index) in selectGroupName"
-            :key="index"
+            v-for="name in selectGroupName"
+            :key="name.id"
             class="group-item"
             :class="{ active: selectedGroup === name }"
             @click="selectGroup(name)"
