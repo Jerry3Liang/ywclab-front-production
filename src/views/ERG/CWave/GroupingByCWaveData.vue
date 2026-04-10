@@ -15,21 +15,29 @@
   <div data-bs-spy="scroll" data-bs-target="#scrollSample" data-bs-offset="0" class="scrollspy-example" tabindex="0">
     <h1 id="scrollspyHeading1" style="padding-bottom: 5px">根據 C Wave Data 進行動物實驗分組</h1>
     <div class="input-group" style="width: 500px">
-      <input class="form-control form-control-lg"
-             id="formFileLg"
-             type="file"
-             multiple
-             @change="onFileChange"
-             name="files"
-             style="width: 270px; margin-bottom: 5px"
-             :disabled="showRawBarChart">
+      <upload-util
+          :i18nText="i18nText"
+          :disabled="showRawBarChart"
+          :loading="loading"
+          :isDragging="isDragging"
+          @file-change="backedUploadUtilFileChangeData"
+      />
+<!--      <input class="form-control form-control-lg"-->
+<!--             id="formFileLg"-->
+<!--             type="file"-->
+<!--             multiple-->
+<!--             @change="onFileChange"-->
+<!--             name="files"-->
+<!--             style="width: 270px; margin-bottom: 5px"-->
+<!--             :disabled="showRawBarChart">-->
       <button class="btn btn-outline-success"
               type="button"
               @click="clearInput"
-              v-if="selectedFile"
-              style="margin-left: 10px; margin-bottom: 5px">重置</button>
+              v-if="selectedFile">重置</button>
     </div>
-    <div class="spinner-border m-5" style="width: 3rem; height: 3rem;" role="status" v-if="loading">
+    <div class="d-flex align-items-center form-control" v-if="loading" style="width: 130px; border: none; color: green">
+      <strong>{{ i18nText.uploadingText }}</strong>
+      <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>
     </div>
     <h4 v-if="showRawBarChart" style="color: #bb2d3b; margin-top: 10px">最後一個 bar 為全部數值平均的值</h4>
     <div class="chartBlockA">
@@ -215,7 +223,13 @@
              :data-bs-toggle="isDragging ? '' : 'tooltip'"
              :data-bs-placement="'bottom'"
              :title="hoveredItem === item ? formatAsJson(finalDataMapForTooltips.get(item)) : ''"
-             style="display: flex; align-items: center; background-color: #dcfce7; padding: 4px 8px; border-radius: 4px; margin-right: 8px;">
+             style="display: flex;
+                    align-items: center;
+                    background-color: #dcfce7;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    margin-right: 8px;
+                    user-select: none">
           {{ item }}
         </div>
       </VueDraggable>
@@ -301,8 +315,11 @@ import axiosApi from "@/plugins/axios.js";
 import {Chart, registerables} from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import SweetAlert2 from "sweetalert2";
+import UploadUtil from "@/components/UploadUtil.vue";
 import { VueDraggable } from 'vue-draggable-plus';
 import { useFileNameStore } from '@/stores/usefilename-store.js';
+import {useI18n} from "vue-i18n";
+import {useUploaderI18n} from "@/composables/useUploaderI18n.js";
 
 Chart.register(...registerables, annotationPlugin);
 
@@ -444,6 +461,128 @@ const fixedColors = [
   "#2828FF", "#C07AB8", "#E2C2DE", "#D1E9E9", "#FFFF93", "#CDCD9A", "#FF33D6"
 ];
 
+//接收 UploadUtil.vue 子元件傳回來的 File Change 值
+const backedUploadUtilFileChangeData = (newData) => {
+  let selectedFiles = [];
+  Object.assign(selectedFiles, newData);
+  selectedFile.value = selectedFiles;
+}
+
+const { i18nText } = useUploaderI18n();
+
+watch(
+    //要監聽的物件
+    () => selectedFile.value,
+    //監聽到後要實作的方法
+    async () => {
+      try{
+        const formData = new FormData();
+        for(let i = 0; i < selectedFile.value.length; i++){
+          formData.append("files", selectedFile.value[i]);
+        }
+
+        loading.value = true;  //開始加載
+
+        const response = await axiosApi.post("/c_wave/groupingByTable", formData);
+        ABCWaveTableData.value = response.data;
+
+        const fileName = [];
+        const aWaveAverage = [];
+        const bWaveAverage = [];
+        const cWaveAverage = [];
+        const colors = [];
+        let num = 0;
+        let sumLA = 0.0;
+        let sumLB = 0.0;
+        let sumLC = 0.0;
+        let sumRA = 0.0;
+        let sumRB = 0.0;
+        let sumRC = 0.0;
+
+        for(let i = 0; i < ABCWaveTableData.value.length; i++){
+          fileName.push(ABCWaveTableData.value[i].groupName + '-L');
+          fileName.push(ABCWaveTableData.value[i].groupName + '-R');
+          aWaveAverage.push(ABCWaveTableData.value[i].leftEyeAverageAWave);
+          aWaveAverage.push(ABCWaveTableData.value[i].rightEyeAverageAWave);
+          bWaveAverage.push(ABCWaveTableData.value[i].leftEyeAverageBWave);
+          bWaveAverage.push(ABCWaveTableData.value[i].rightEyeAverageBWave);
+          cWaveAverage.push(ABCWaveTableData.value[i].leftEyeAverageCWave);
+          cWaveAverage.push(ABCWaveTableData.value[i].rightEyeAverageCWave);
+          colors.push(fixedColors[i])
+          colors.push(fixedColors[i])
+          sumLA += ABCWaveTableData.value[i].leftEyeAverageAWave;
+          sumRA += ABCWaveTableData.value[i].rightEyeAverageAWave;
+          sumLB += ABCWaveTableData.value[i].leftEyeAverageBWave;
+          sumRB += ABCWaveTableData.value[i].rightEyeAverageBWave;
+          sumLC += ABCWaveTableData.value[i].leftEyeAverageCWave;
+          sumRC += ABCWaveTableData.value[i].rightEyeAverageCWave;
+          num++;
+        }
+        cWaveTotalAverage.value = (sumLC + sumRC) / (num * 2);
+        aWaveAverage.push((sumLA + sumRA) / (num * 2));
+        bWaveAverage.push((sumLB + sumRB) / (num * 2));
+        cWaveAverage.push(cWaveTotalAverage.value);
+        fileName.push('totalAverage');
+        colors.push('black');
+
+        groupName.value = fileName;
+        AWaveAverageTableData.value = aWaveAverage;
+        BWaveAverageTableData.value = bWaveAverage;
+        CWaveAverageTableData.value = cWaveAverage;
+        barColors.value = colors;
+
+        loading.value = false;  // 完成加載
+
+        drawWaveChart('aWave-chart', chartInstanceA, groupName.value, AWaveAverageTableData.value, barColors.value, 'A Wave');
+        drawWaveChart('bWave-chart', chartInstanceB, groupName.value, BWaveAverageTableData.value, barColors.value, 'B Wave');
+        drawWaveChart('cWave-chart', chartInstanceC, groupName.value, CWaveAverageTableData.value, barColors.value, 'C Wave');
+        showRawBarChart.value = true;
+      } catch (error) {
+        if (error.response && Array.isArray(error.response.data)) {
+          const errorMessages = error.response.data;
+
+          if (errorMessages.length === 1) {
+            // 單一檔案錯誤的處理
+            await SweetAlert2.fire({
+              icon: 'error',
+              title: '檔案錯誤',
+              html: `<p>${errorMessages[0]}</p><P>請重新檢查 Excel 檔！</P>`  //單一錯誤訊息
+            });
+            // loading.value = false;  // 完成加載
+            window.location.reload();
+          } else {
+            // 多個檔案錯誤的處理
+            await SweetAlert2.fire({
+              icon: 'error',
+              title: '多個檔案錯誤',
+              html: `<ol>${errorMessages.map(msg => {
+                const dashes = '-'.repeat(50);  // 產生對應數量的破折號
+                return `<li>${msg}</li><p>${dashes}</p>`;
+              }).join('')}</ol><p>請重新檢查 Excel 檔！</p>`
+            });
+            // loading.value = false;  // 完成加載
+            window.location.reload();
+          }
+        } else if(error.response.status === 500){
+          await SweetAlert2.fire({
+            icon: 'error',
+            title: '檔案轉換限制',
+            html: `<p>因所使用的格式轉換程式為免費版，有檔案轉換限制！</p><P>請重新啟動服務 或 自行將檔案另存為 Excel 檔！</P>`  //單一錯誤訊息
+          });
+          window.location.reload();
+        } else {
+          // 未知錯誤或非預期錯誤的處理
+          await SweetAlert2.fire({
+            icon: 'error',
+            title: '未知錯誤',
+            text: '恭喜您能見到厲害的程式設計師本人囉！'
+          });
+          loading.value = false;  // 完成加載
+        }
+      }
+    }
+);
+
 const barColors = ref([]);
 
 const Toast = SweetAlert2.mixin({
@@ -459,115 +598,115 @@ const Toast = SweetAlert2.mixin({
 //定義是否正在繪製圖表
 const isChartDrawing = ref(false);
 
-const onFileChange = async (event) => {
-  selectedFile.value = event.target.files;
-
-  try{
-    const formData = new FormData();
-    for(let i = 0; i < selectedFile.value.length; i++){
-      formData.append("files", selectedFile.value[i]);
-    }
-
-    loading.value = true;  //開始加載
-
-    const response = await axiosApi.post("/c_wave/groupingByTable", formData);
-    ABCWaveTableData.value = response.data;
-
-    const fileName = [];
-    const aWaveAverage = [];
-    const bWaveAverage = [];
-    const cWaveAverage = [];
-    const colors = [];
-    let num = 0;
-    let sumLA = 0.0;
-    let sumLB = 0.0;
-    let sumLC = 0.0;
-    let sumRA = 0.0;
-    let sumRB = 0.0;
-    let sumRC = 0.0;
-
-    for(let i = 0; i < ABCWaveTableData.value.length; i++){
-      fileName.push(ABCWaveTableData.value[i].groupName + '-L');
-      fileName.push(ABCWaveTableData.value[i].groupName + '-R');
-      aWaveAverage.push(ABCWaveTableData.value[i].leftEyeAverageAWave);
-      aWaveAverage.push(ABCWaveTableData.value[i].rightEyeAverageAWave);
-      bWaveAverage.push(ABCWaveTableData.value[i].leftEyeAverageBWave);
-      bWaveAverage.push(ABCWaveTableData.value[i].rightEyeAverageBWave);
-      cWaveAverage.push(ABCWaveTableData.value[i].leftEyeAverageCWave);
-      cWaveAverage.push(ABCWaveTableData.value[i].rightEyeAverageCWave);
-      colors.push(fixedColors[i])
-      colors.push(fixedColors[i])
-      sumLA += ABCWaveTableData.value[i].leftEyeAverageAWave;
-      sumRA += ABCWaveTableData.value[i].rightEyeAverageAWave;
-      sumLB += ABCWaveTableData.value[i].leftEyeAverageBWave;
-      sumRB += ABCWaveTableData.value[i].rightEyeAverageBWave;
-      sumLC += ABCWaveTableData.value[i].leftEyeAverageCWave;
-      sumRC += ABCWaveTableData.value[i].rightEyeAverageCWave;
-      num++;
-    }
-    cWaveTotalAverage.value = (sumLC + sumRC) / (num * 2);
-    aWaveAverage.push((sumLA + sumRA) / (num * 2));
-    bWaveAverage.push((sumLB + sumRB) / (num * 2));
-    cWaveAverage.push(cWaveTotalAverage.value);
-    fileName.push('totalAverage');
-    colors.push('black');
-
-    groupName.value = fileName;
-    AWaveAverageTableData.value = aWaveAverage;
-    BWaveAverageTableData.value = bWaveAverage;
-    CWaveAverageTableData.value = cWaveAverage;
-    barColors.value = colors;
-
-    loading.value = false;  // 完成加載
-
-    drawWaveChart('aWave-chart', chartInstanceA, groupName.value, AWaveAverageTableData.value, barColors.value, 'A Wave');
-    drawWaveChart('bWave-chart', chartInstanceB, groupName.value, BWaveAverageTableData.value, barColors.value, 'B Wave');
-    drawWaveChart('cWave-chart', chartInstanceC, groupName.value, CWaveAverageTableData.value, barColors.value, 'C Wave');
-    showRawBarChart.value = true;
-  } catch (error) {
-    if (error.response && Array.isArray(error.response.data)) {
-      const errorMessages = error.response.data;
-
-      if (errorMessages.length === 1) {
-        // 單一檔案錯誤的處理
-        await SweetAlert2.fire({
-          icon: 'error',
-          title: '檔案錯誤',
-          html: `<p>${errorMessages[0]}</p><P>請重新檢查 Excel 檔！</P>`  //單一錯誤訊息
-        });
-        // loading.value = false;  // 完成加載
-        window.location.reload();
-      } else {
-        // 多個檔案錯誤的處理
-        await SweetAlert2.fire({
-          icon: 'error',
-          title: '多個檔案錯誤',
-          html: `<ol>${errorMessages.map(msg => {
-            const dashes = '-'.repeat(50);  // 產生對應數量的破折號
-            return `<li>${msg}</li><p>${dashes}</p>`;
-          }).join('')}</ol><p>請重新檢查 Excel 檔！</p>`
-        });
-        // loading.value = false;  // 完成加載
-        window.location.reload();
-      }
-    } else if(error.response.status === 500){
-      await SweetAlert2.fire({
-        icon: 'error',
-        title: '檔案轉換限制',
-        html: `<p>因所使用的格式轉換程式為免費版，有檔案轉換限制！</p><P>請重新啟動服務 或 自行將檔案另存為 Excel 檔！</P>`  //單一錯誤訊息
-      });
-      window.location.reload();
-    } else {
-      // 未知錯誤或非預期錯誤的處理
-      await SweetAlert2.fire({
-        icon: 'error',
-        title: '未知錯誤',
-        text: '恭喜您能見到厲害的程式設計師本人囉！'
-      });
-      loading.value = false;  // 完成加載
-    }
-  }
-};
+// const onFileChange = async (event) => {
+//   selectedFile.value = event.target.files;
+//
+//   try{
+//     const formData = new FormData();
+//     for(let i = 0; i < selectedFile.value.length; i++){
+//       formData.append("files", selectedFile.value[i]);
+//     }
+//
+//     loading.value = true;  //開始加載
+//
+//     const response = await axiosApi.post("/c_wave/groupingByTable", formData);
+//     ABCWaveTableData.value = response.data;
+//
+//     const fileName = [];
+//     const aWaveAverage = [];
+//     const bWaveAverage = [];
+//     const cWaveAverage = [];
+//     const colors = [];
+//     let num = 0;
+//     let sumLA = 0.0;
+//     let sumLB = 0.0;
+//     let sumLC = 0.0;
+//     let sumRA = 0.0;
+//     let sumRB = 0.0;
+//     let sumRC = 0.0;
+//
+//     for(let i = 0; i < ABCWaveTableData.value.length; i++){
+//       fileName.push(ABCWaveTableData.value[i].groupName + '-L');
+//       fileName.push(ABCWaveTableData.value[i].groupName + '-R');
+//       aWaveAverage.push(ABCWaveTableData.value[i].leftEyeAverageAWave);
+//       aWaveAverage.push(ABCWaveTableData.value[i].rightEyeAverageAWave);
+//       bWaveAverage.push(ABCWaveTableData.value[i].leftEyeAverageBWave);
+//       bWaveAverage.push(ABCWaveTableData.value[i].rightEyeAverageBWave);
+//       cWaveAverage.push(ABCWaveTableData.value[i].leftEyeAverageCWave);
+//       cWaveAverage.push(ABCWaveTableData.value[i].rightEyeAverageCWave);
+//       colors.push(fixedColors[i])
+//       colors.push(fixedColors[i])
+//       sumLA += ABCWaveTableData.value[i].leftEyeAverageAWave;
+//       sumRA += ABCWaveTableData.value[i].rightEyeAverageAWave;
+//       sumLB += ABCWaveTableData.value[i].leftEyeAverageBWave;
+//       sumRB += ABCWaveTableData.value[i].rightEyeAverageBWave;
+//       sumLC += ABCWaveTableData.value[i].leftEyeAverageCWave;
+//       sumRC += ABCWaveTableData.value[i].rightEyeAverageCWave;
+//       num++;
+//     }
+//     cWaveTotalAverage.value = (sumLC + sumRC) / (num * 2);
+//     aWaveAverage.push((sumLA + sumRA) / (num * 2));
+//     bWaveAverage.push((sumLB + sumRB) / (num * 2));
+//     cWaveAverage.push(cWaveTotalAverage.value);
+//     fileName.push('totalAverage');
+//     colors.push('black');
+//
+//     groupName.value = fileName;
+//     AWaveAverageTableData.value = aWaveAverage;
+//     BWaveAverageTableData.value = bWaveAverage;
+//     CWaveAverageTableData.value = cWaveAverage;
+//     barColors.value = colors;
+//
+//     loading.value = false;  // 完成加載
+//
+//     drawWaveChart('aWave-chart', chartInstanceA, groupName.value, AWaveAverageTableData.value, barColors.value, 'A Wave');
+//     drawWaveChart('bWave-chart', chartInstanceB, groupName.value, BWaveAverageTableData.value, barColors.value, 'B Wave');
+//     drawWaveChart('cWave-chart', chartInstanceC, groupName.value, CWaveAverageTableData.value, barColors.value, 'C Wave');
+//     showRawBarChart.value = true;
+//   } catch (error) {
+//     if (error.response && Array.isArray(error.response.data)) {
+//       const errorMessages = error.response.data;
+//
+//       if (errorMessages.length === 1) {
+//         // 單一檔案錯誤的處理
+//         await SweetAlert2.fire({
+//           icon: 'error',
+//           title: '檔案錯誤',
+//           html: `<p>${errorMessages[0]}</p><P>請重新檢查 Excel 檔！</P>`  //單一錯誤訊息
+//         });
+//         // loading.value = false;  // 完成加載
+//         window.location.reload();
+//       } else {
+//         // 多個檔案錯誤的處理
+//         await SweetAlert2.fire({
+//           icon: 'error',
+//           title: '多個檔案錯誤',
+//           html: `<ol>${errorMessages.map(msg => {
+//             const dashes = '-'.repeat(50);  // 產生對應數量的破折號
+//             return `<li>${msg}</li><p>${dashes}</p>`;
+//           }).join('')}</ol><p>請重新檢查 Excel 檔！</p>`
+//         });
+//         // loading.value = false;  // 完成加載
+//         window.location.reload();
+//       }
+//     } else if(error.response.status === 500){
+//       await SweetAlert2.fire({
+//         icon: 'error',
+//         title: '檔案轉換限制',
+//         html: `<p>因所使用的格式轉換程式為免費版，有檔案轉換限制！</p><P>請重新啟動服務 或 自行將檔案另存為 Excel 檔！</P>`  //單一錯誤訊息
+//       });
+//       window.location.reload();
+//     } else {
+//       // 未知錯誤或非預期錯誤的處理
+//       await SweetAlert2.fire({
+//         icon: 'error',
+//         title: '未知錯誤',
+//         text: '恭喜您能見到厲害的程式設計師本人囉！'
+//       });
+//       loading.value = false;  // 完成加載
+//     }
+//   }
+// };
 
 const filterButton = (highInput, lowInput) => {
 
@@ -616,9 +755,11 @@ const filterButton = (highInput, lowInput) => {
   console.log(greatestCommonFactor)
   let localCommonFactorList = [];
   for(let i = 1; i <= greatestCommonFactor; i++){
-    if(greatestCommonFactor % i === 0){
-      localCommonFactorList.push(i);
-    }
+    // 不使用最大公因數
+    localCommonFactorList.push(i);
+    // if(greatestCommonFactor % i === 0){
+    //   localCommonFactorList.push(i);
+    // }
   }
 
   commonFactorList.value = localCommonFactorList;
